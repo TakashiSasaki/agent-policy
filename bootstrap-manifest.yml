@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "toolchain": {
+    "repository": "TakashiSasaki/agent-policy",
+    "revision": "beeb554e20fbc13be468357d2b92122dba45e2f3"
+  },
+  "entrypoint": {
+    "executable": "agent-policy",
+    "command": "init"
+  }
+}

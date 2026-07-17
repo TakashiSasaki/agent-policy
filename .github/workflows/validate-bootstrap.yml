@@ -1,0 +1,29 @@
+name: Validate bootstrap skill
+on:
+  push:
+    branches: [bootstrap-agent-policy]
+  pull_request:
+    branches: [bootstrap-agent-policy]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pytest
+      - run: pytest -q
+      - run: python -m compileall -q scripts
+      - name: Reject mutable toolchain references
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          value = json.loads(Path('bootstrap-manifest.yml').read_text())
+          revision = value['toolchain']['revision']
+          if not re.fullmatch(r'[0-9a-f]{40}', revision):
+              raise SystemExit('toolchain revision is not a full commit SHA')
+          PY
