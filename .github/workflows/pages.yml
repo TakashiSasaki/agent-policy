@@ -9,15 +9,21 @@ on:
       - "overrides/**"
       - "requirements-docs.txt"
       - ".github/workflows/pages.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "overrides/**"
+      - "requirements-docs.txt"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: github-pages
+  group: github-pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -44,11 +50,16 @@ jobs:
         run: mkdocs build --strict --clean
 
       - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: site
 
   deploy:
+    if: github.event_name != 'pull_request'
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
