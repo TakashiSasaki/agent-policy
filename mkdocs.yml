@@ -9,6 +9,8 @@ site_dir: site
 
 theme:
   name: readthedocs
+  custom_dir: overrides
+  favicon: assets/icons/favicon-32.png
 
 nav:
   - ホーム: index.md
@@ -16,6 +18,7 @@ nav:
       - はじめに: getting-started.md
       - CLI: cli.md
       - ブートストラップスキル: bootstrap.md
+      - PWAとして利用する: pwa.md
   - 設計:
       - アーキテクチャ: architecture.md
       - 設定ファイル: configuration.md
@@ -29,3 +32,6 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+
+extra_javascript:
+  - assets/javascripts/pwa.js
