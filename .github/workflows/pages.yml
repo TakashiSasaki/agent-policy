@@ -6,6 +6,7 @@ on:
     paths:
       - "docs/**"
       - "mkdocs.yml"
+      - "requirements-docs.txt"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,10 +31,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: docs/requirements.txt
+          cache-dependency-path: requirements-docs.txt
 
       - name: Install documentation dependencies
-        run: python -m pip install --disable-pip-version-check -r docs/requirements.txt
+        run: python -m pip install --disable-pip-version-check -r requirements-docs.txt
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
