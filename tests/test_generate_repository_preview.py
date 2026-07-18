@@ -1,4 +1,11 @@
-from scripts.generate_repository_preview import MAX_PREVIEW_BYTES, classify_content
+from pathlib import Path
+from runpy import run_path
+
+MODULE = run_path(
+    str(Path(__file__).parents[1] / "scripts" / "generate_repository_preview.py")
+)
+MAX_PREVIEW_BYTES = MODULE["MAX_PREVIEW_BYTES"]
+classify_content = MODULE["classify_content"]
 
 
 def test_classify_utf8_text() -> None:
