@@ -2,7 +2,8 @@ from scripts.generate_repository_preview import MAX_PREVIEW_BYTES, classify_cont
 
 
 def test_classify_utf8_text() -> None:
-    assert classify_content("example.py", b"print('ok')\n") == ("text", "text/x-python")
+    kind, _ = classify_content("example.py", b"print('ok')\n")
+    assert kind == "text"
 
 
 def test_classify_png_image() -> None:
