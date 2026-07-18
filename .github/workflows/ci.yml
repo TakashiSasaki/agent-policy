@@ -17,17 +17,5 @@ jobs:
       - run: python -m pip install -e '.[dev]'
       - run: ruff --version
       - run: ruff check src tests scripts
-      - name: Run pytest with captured output
-        run: pytest > pytest-output.txt 2>&1 || echo failed > pytest-failed
-      - name: Upload pytest diagnostics
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: pytest-diagnostics
-          path: |
-            pytest-output.txt
-            pytest-failed
-          if-no-files-found: error
-      - name: Fail when pytest failed
-        run: test ! -f pytest-failed
+      - run: pytest
       - run: python -m compileall -q src scripts
