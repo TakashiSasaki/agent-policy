@@ -43,6 +43,38 @@ jobs:
       - name: Install documentation dependencies
         run: python -m pip install --disable-pip-version-check -r requirements-docs.txt
 
+      - name: Generate documentation assets
+        run: python scripts/generate-doc-assets.py
+
+      - name: Record documentation build metadata
+        env:
+          BUILD_COMMIT: ${{ github.sha }}
+          BUILD_REPOSITORY: ${{ github.repository }}
+          BUILD_RUN_ID: ${{ github.run_id }}
+          BUILD_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+          import json
+          import os
+
+          built_at = datetime.now(timezone.utc)
+          metadata = {
+              "built_at_utc": built_at.isoformat().replace("+00:00", "Z"),
+              "built_at_jst": built_at.astimezone(ZoneInfo("Asia/Tokyo")).isoformat(),
+              "commit": os.environ["BUILD_COMMIT"],
+              "repository": os.environ["BUILD_REPOSITORY"],
+              "run_id": int(os.environ["BUILD_RUN_ID"]),
+              "run_number": int(os.environ["BUILD_RUN_NUMBER"]),
+          }
+          Path("docs/build-info.json").write_text(
+              json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
 
