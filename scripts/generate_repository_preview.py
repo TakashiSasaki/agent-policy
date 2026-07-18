@@ -60,10 +60,10 @@ def asset_suffix(kind: str, path: str) -> str:
     return suffix if suffix in {".gif", ".jpeg", ".jpg", ".png", ".webp"} else ".bin"
 
 
-def github_url(branch: str, path: str) -> str:
-    encoded_branch = quote(branch, safe="")
+def github_url(revision: str, path: str) -> str:
+    encoded_revision = quote(revision, safe="")
     encoded_path = "/".join(quote(part, safe="") for part in path.split("/"))
-    return f"https://github.com/{REPOSITORY}/blob/{encoded_branch}/{encoded_path}"
+    return f"https://github.com/{REPOSITORY}/blob/{encoded_revision}/{encoded_path}"
 
 
 def generate_branch(branch: str, ref: str, output_root: Path) -> dict[str, object]:
@@ -88,7 +88,7 @@ def generate_branch(branch: str, ref: str, output_root: Path) -> dict[str, objec
         files[path] = {
             "asset_url": asset_url,
             "blob": blob_sha,
-            "github_url": github_url(branch, path),
+            "github_url": github_url(commit, path),
             "kind": kind,
             "mime_type": mime_type,
             "size": len(content),
