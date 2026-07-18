@@ -88,7 +88,7 @@ def check_manifest() -> bool:
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     success = True
     for branch, ref in BRANCH_REFS.items():
-        expected = tracked_paths(ref)
+        expected = sorted(tracked_paths(ref))
         branch_data = manifest.get("branches", {}).get(branch, {})
         actual = sorted(branch_data.get("files", {}))
         if actual == expected:
