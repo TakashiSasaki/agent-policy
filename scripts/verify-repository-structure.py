@@ -3,20 +3,18 @@ from __future__ import annotations
 
 import argparse
 import difflib
-import html
+import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import TypeAlias
 
 DOCUMENT_PATH = Path("docs/repository-structure.md")
+MANIFEST_PATH = Path("docs/generated/repository-preview/index.json")
 REMOTE_BOOTSTRAP_REF = "refs/remotes/origin/bootstrap-agent-policy"
 BRANCH_REFS = {
     "main": "HEAD",
     "bootstrap-agent-policy": REMOTE_BOOTSTRAP_REF,
 }
-
-TreeNode: TypeAlias = dict[str, "TreeNode | None"]
 
 
 def tracked_paths(ref: str) -> list[str]:
@@ -28,64 +26,12 @@ def tracked_paths(ref: str) -> list[str]:
     return [item.decode("utf-8") for item in result.stdout.split(b"\0") if item]
 
 
-def build_tree(paths: list[str]) -> TreeNode:
-    root: TreeNode = {}
-    for path in paths:
-        parts = path.split("/")
-        current = root
-        for part in parts[:-1]:
-            child = current.setdefault(part, {})
-            if child is None:
-                raise ValueError(f"Path collision while rendering tree: {path}")
-            current = child
-        current[parts[-1]] = None
-    return root
-
-
-def sorted_items(node: TreeNode) -> list[tuple[str, TreeNode | None]]:
-    return sorted(
-        node.items(),
-        key=lambda item: (item[1] is None, item[0].casefold(), item[0]),
+def tree_placeholder(branch: str) -> str:
+    return (
+        f'<div class="repository-tree" data-repository-branch="{branch}">\n'
+        '<p class="repository-tree__loading" role="status">ツリーを読み込んでいます…</p>\n'
+        "</div>"
     )
-
-
-def render_node(node: TreeNode, branch: str, prefix: tuple[str, ...] = ()) -> list[str]:
-    lines: list[str] = []
-    escaped_branch = html.escape(branch, quote=True)
-    for name, child in sorted_items(node):
-        path_parts = (*prefix, name)
-        path = "/".join(path_parts)
-        escaped_name = html.escape(name)
-        if child is None:
-            escaped_path = html.escape(path, quote=True)
-            lines.append(
-                '<li class="repository-tree__file" role="treeitem">'
-                '<button type="button" class="repository-file-preview" '
-                f'data-repository-branch="{escaped_branch}" '
-                f'data-repository-path="{escaped_path}">{escaped_name}</button></li>'
-            )
-            continue
-
-        lines.append(
-            '<li class="repository-tree__directory" role="treeitem" aria-expanded="true">'
-            f'<span class="repository-tree__directory-name">{escaped_name}/</span>'
-            '<ul role="group">'
-        )
-        lines.extend(render_node(child, branch, path_parts))
-        lines.append("</ul></li>")
-    return lines
-
-
-def render_tree(ref: str, branch: str) -> str:
-    escaped_branch = html.escape(branch, quote=True)
-    lines = [
-        f'<div class="repository-tree" data-repository-branch="{escaped_branch}">',
-        '<ul class="repository-tree__root" role="tree" '
-        f'aria-label="{escaped_branch} branch files">',
-    ]
-    lines.extend(render_node(build_tree(tracked_paths(ref)), branch))
-    lines.extend(["</ul>", "</div>"])
-    return "\n".join(lines)
 
 
 def markers(branch: str) -> tuple[str, str]:
@@ -95,19 +41,19 @@ def markers(branch: str) -> tuple[str, str]:
     )
 
 
-def tree_block(branch: str, tree: str) -> str:
+def tree_block(branch: str) -> str:
     start, end = markers(branch)
-    return f"{start}\n{tree}\n{end}"
+    return f"{start}\n{tree_placeholder(branch)}\n{end}"
 
 
-def replace_block(document: str, branch: str, tree: str) -> str:
+def replace_block(document: str, branch: str) -> str:
     start, end = markers(branch)
     start_index = document.find(start)
     end_index = document.find(end)
     if start_index < 0 or end_index < 0 or end_index < start_index:
         raise ValueError(f"Missing or invalid tree markers for {branch}")
     end_index += len(end)
-    return document[:start_index] + tree_block(branch, tree) + document[end_index:]
+    return document[:start_index] + tree_block(branch) + document[end_index:]
 
 
 def extract_tree(document: str, branch: str) -> str:
@@ -119,55 +65,68 @@ def extract_tree(document: str, branch: str) -> str:
     return document[start_index + len(start) : end_index].strip()
 
 
-def check(document: str, rendered: dict[str, str]) -> int:
-    failures = 0
-    for branch, expected in rendered.items():
-        actual = extract_tree(document, branch)
+def check_placeholder(document: str, branch: str) -> bool:
+    expected = tree_placeholder(branch)
+    actual = extract_tree(document, branch)
+    if actual == expected:
+        print(f"Documented tree placeholder matches {branch}.")
+        return True
+    print(f"Documented tree placeholder does not match {branch}.", file=sys.stderr)
+    diff = difflib.unified_diff(
+        actual.splitlines(),
+        expected.splitlines(),
+        fromfile=f"documented/{branch}",
+        tofile=f"expected/{branch}",
+        lineterm="",
+    )
+    print("\n".join(diff), file=sys.stderr)
+    return False
+
+
+def check_manifest() -> bool:
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    success = True
+    for branch, ref in BRANCH_REFS.items():
+        expected = tracked_paths(ref)
+        branch_data = manifest.get("branches", {}).get(branch, {})
+        actual = sorted(branch_data.get("files", {}))
         if actual == expected:
-            print(f"Documented tree matches {branch}.")
+            print(f"Published preview tree matches {branch}.")
             continue
-        failures += 1
-        print(f"Documented tree does not match {branch}.", file=sys.stderr)
+        success = False
+        print(f"Published preview tree does not match {branch}.", file=sys.stderr)
         diff = difflib.unified_diff(
-            actual.splitlines(),
-            expected.splitlines(),
-            fromfile=f"documented/{branch}",
+            actual,
+            expected,
+            fromfile=f"preview-manifest/{branch}",
             tofile=f"git/{branch}",
             lineterm="",
         )
         print("\n".join(diff), file=sys.stderr)
-    if failures:
-        print(
-            "Run `python scripts/verify-repository-structure.py --update` and review the result.",
-            file=sys.stderr,
-        )
-        return 1
-    return 0
+    return success
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Verify documented repository trees against Git tree objects."
+        description="Verify published repository trees against Git tree objects."
     )
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--check", action="store_true", help="Fail when documentation is stale.")
-    mode.add_argument("--update", action="store_true", help="Rewrite documented tree blocks.")
+    mode.add_argument("--check", action="store_true", help="Fail when publication is stale.")
+    mode.add_argument("--update", action="store_true", help="Rewrite documented placeholders.")
     args = parser.parse_args()
 
     document = DOCUMENT_PATH.read_text(encoding="utf-8")
-    rendered = {
-        branch: render_tree(ref, branch) for branch, ref in BRANCH_REFS.items()
-    }
-
     if args.update:
         updated = document
-        for branch, tree in rendered.items():
-            updated = replace_block(updated, branch, tree)
+        for branch in BRANCH_REFS:
+            updated = replace_block(updated, branch)
         DOCUMENT_PATH.write_text(updated, encoding="utf-8")
         print(f"Updated {DOCUMENT_PATH}.")
         return 0
 
-    return check(document, rendered)
+    placeholders_match = all(check_placeholder(document, branch) for branch in BRANCH_REFS)
+    manifest_matches = check_manifest()
+    return 0 if placeholders_match and manifest_matches else 1
 
 
 if __name__ == "__main__":
