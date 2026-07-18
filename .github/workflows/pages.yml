@@ -38,6 +38,9 @@ jobs:
       - name: Verify documented repository trees
         run: python scripts/verify-repository-structure.py --check
 
+      - name: Generate repository file previews
+        run: python scripts/generate_repository_preview.py
+
       - name: Install documentation dependencies
         run: python -m pip install --disable-pip-version-check -r requirements-docs.txt
 
