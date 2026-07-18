@@ -1,4 +1,6 @@
 site_name: agent-policy
+site_author: Takashi SASAKI
+copyright: Copyright © 2026 Takashi SASAKI. All rights reserved.
 site_description: 複数のリポジトリとエージェントで共有する規約を、検証・合成・配布するためのポリシーツールチェーン
 site_url: https://agent-policy.moukaeritai.work/
 repo_url: https://github.com/TakashiSasaki/agent-policy
