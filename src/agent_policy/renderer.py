@@ -8,7 +8,6 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from .config import Config, package_root
 from .policy_loader import PolicyRule
 
-
 GENERATED_MARKER = "agent-policy-generated: true"
 
 
