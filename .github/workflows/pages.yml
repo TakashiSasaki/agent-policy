@@ -35,11 +35,11 @@ jobs:
           git fetch --no-tags --depth=1 origin
           bootstrap-agent-policy:refs/remotes/origin/bootstrap-agent-policy
 
-      - name: Verify documented repository trees
-        run: python scripts/verify-repository-structure.py --check
-
       - name: Generate repository file previews
         run: python scripts/generate_repository_preview.py
+
+      - name: Verify published repository trees
+        run: python scripts/verify-repository-structure.py --check
 
       - name: Install documentation dependencies
         run: python -m pip install --disable-pip-version-check -r requirements-docs.txt
