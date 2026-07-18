@@ -14,6 +14,88 @@
     return manifestPromise;
   }
 
+  function buildTree(paths) {
+    const root = {};
+    for (const path of paths) {
+      const parts = path.split("/");
+      let current = root;
+      parts.forEach((part, index) => {
+        const isFile = index === parts.length - 1;
+        if (isFile) {
+          current[part] = null;
+        } else {
+          current[part] ??= {};
+          current = current[part];
+        }
+      });
+    }
+    return root;
+  }
+
+  function sortedEntries(node) {
+    return Object.entries(node).sort(([leftName, leftChild], [rightName, rightChild]) => {
+      const leftFile = leftChild === null;
+      const rightFile = rightChild === null;
+      if (leftFile !== rightFile) return leftFile ? 1 : -1;
+      return leftName.localeCompare(rightName, undefined, { sensitivity: "base" });
+    });
+  }
+
+  function renderTreeNode(node, branch, prefix = []) {
+    const list = document.createElement("ul");
+    list.setAttribute("role", prefix.length ? "group" : "tree");
+    if (!prefix.length) list.className = "repository-tree__root";
+
+    for (const [name, child] of sortedEntries(node)) {
+      const item = document.createElement("li");
+      item.setAttribute("role", "treeitem");
+      const pathParts = [...prefix, name];
+      if (child === null) {
+        item.className = "repository-tree__file";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "repository-file-preview";
+        button.dataset.repositoryBranch = branch;
+        button.dataset.repositoryPath = pathParts.join("/");
+        button.textContent = name;
+        item.append(button);
+      } else {
+        item.className = "repository-tree__directory";
+        item.setAttribute("aria-expanded", "true");
+        const label = document.createElement("span");
+        label.className = "repository-tree__directory-name";
+        label.textContent = `${name}/`;
+        item.append(label, renderTreeNode(child, branch, pathParts));
+      }
+      list.append(item);
+    }
+    return list;
+  }
+
+  async function initializeTrees() {
+    const containers = [...document.querySelectorAll(".repository-tree[data-repository-branch]")];
+    if (!containers.length) return;
+    try {
+      const manifest = await loadManifest();
+      for (const container of containers) {
+        const branch = container.dataset.repositoryBranch;
+        const files = manifest.branches?.[branch]?.files;
+        if (!files) throw new Error(`Tree metadata is unavailable for ${branch}.`);
+        const tree = renderTreeNode(buildTree(Object.keys(files)), branch);
+        tree.setAttribute("aria-label", `${branch} branch files`);
+        container.replaceChildren(tree);
+      }
+    } catch (error) {
+      console.error(error);
+      for (const container of containers) {
+        const message = document.createElement("p");
+        message.className = "repository-tree__error";
+        message.textContent = "リポジトリツリーを読み込めませんでした。";
+        container.replaceChildren(message);
+      }
+    }
+  }
+
   const textCache = new Map();
   let lastTrigger = null;
 
@@ -151,6 +233,8 @@
       status.textContent = "ファイルのプレビューを読み込めませんでした。";
     }
   }
+
+  initializeTrees();
 
   document.addEventListener("click", (event) => {
     if (!(event.target instanceof Element)) return;
