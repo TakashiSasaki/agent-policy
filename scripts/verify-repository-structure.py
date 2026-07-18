@@ -29,7 +29,8 @@ def tracked_paths(ref: str) -> list[str]:
 def tree_placeholder(branch: str) -> str:
     return (
         f'<div class="repository-tree" data-repository-branch="{branch}">\n'
-        '<p class="repository-tree__loading" role="status">ツリーを読み込んでいます…</p>\n'
+        '<p class="repository-tree__loading" role="status">'
+        "ツリーを読み込んでいます…</p>\n"
         "</div>"
     )
 
