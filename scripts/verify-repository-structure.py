@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import html
 import subprocess
 import sys
 from pathlib import Path
@@ -48,23 +49,42 @@ def sorted_items(node: TreeNode) -> list[tuple[str, TreeNode | None]]:
     )
 
 
-def render_node(node: TreeNode, prefix: str = "") -> list[str]:
+def render_node(node: TreeNode, branch: str, prefix: tuple[str, ...] = ()) -> list[str]:
     lines: list[str] = []
-    items = sorted_items(node)
-    for index, (name, child) in enumerate(items):
-        last = index == len(items) - 1
-        connector = "└── " if last else "├── "
-        suffix = "/" if child is not None else ""
-        lines.append(f"{prefix}{connector}{name}{suffix}")
-        if child is not None:
-            continuation = "    " if last else "│   "
-            lines.extend(render_node(child, prefix + continuation))
+    escaped_branch = html.escape(branch, quote=True)
+    for name, child in sorted_items(node):
+        path_parts = (*prefix, name)
+        path = "/".join(path_parts)
+        escaped_name = html.escape(name)
+        if child is None:
+            escaped_path = html.escape(path, quote=True)
+            lines.append(
+                '<li class="repository-tree__file" role="treeitem">'
+                '<button type="button" class="repository-file-preview" '
+                f'data-repository-branch="{escaped_branch}" '
+                f'data-repository-path="{escaped_path}">{escaped_name}</button></li>'
+            )
+            continue
+
+        lines.append(
+            '<li class="repository-tree__directory" role="treeitem" aria-expanded="true">'
+            f'<span class="repository-tree__directory-name">{escaped_name}/</span>'
+            '<ul role="group">'
+        )
+        lines.extend(render_node(child, branch, path_parts))
+        lines.append("</ul></li>")
     return lines
 
 
-def render_tree(ref: str) -> str:
-    lines = ["."]
-    lines.extend(render_node(build_tree(tracked_paths(ref))))
+def render_tree(ref: str, branch: str) -> str:
+    escaped_branch = html.escape(branch, quote=True)
+    lines = [
+        f'<div class="repository-tree" data-repository-branch="{escaped_branch}">',
+        '<ul class="repository-tree__root" role="tree" '
+        f'aria-label="{escaped_branch} branch files">',
+    ]
+    lines.extend(render_node(build_tree(tracked_paths(ref)), branch))
+    lines.extend(["</ul>", "</div>"])
     return "\n".join(lines)
 
 
@@ -77,7 +97,7 @@ def markers(branch: str) -> tuple[str, str]:
 
 def tree_block(branch: str, tree: str) -> str:
     start, end = markers(branch)
-    return f"{start}\n```text\n{tree}\n```\n{end}"
+    return f"{start}\n{tree}\n{end}"
 
 
 def replace_block(document: str, branch: str, tree: str) -> str:
@@ -96,10 +116,7 @@ def extract_tree(document: str, branch: str) -> str:
     end_index = document.find(end)
     if start_index < 0 or end_index < 0 or end_index < start_index:
         raise ValueError(f"Missing or invalid tree markers for {branch}")
-    fenced = document[start_index + len(start) : end_index].strip()
-    if not fenced.startswith("```text\n") or not fenced.endswith("\n```"):
-        raise ValueError(f"Tree block for {branch} must be a fenced text block")
-    return fenced[len("```text\n") : -len("\n```")]
+    return document[start_index + len(start) : end_index].strip()
 
 
 def check(document: str, rendered: dict[str, str]) -> int:
@@ -138,7 +155,9 @@ def main() -> int:
     args = parser.parse_args()
 
     document = DOCUMENT_PATH.read_text(encoding="utf-8")
-    rendered = {branch: render_tree(ref) for branch, ref in BRANCH_REFS.items()}
+    rendered = {
+        branch: render_tree(ref, branch) for branch, ref in BRANCH_REFS.items()
+    }
 
     if args.update:
         updated = document
