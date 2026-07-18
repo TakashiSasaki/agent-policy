@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from .config import Config, package_root
-from .policy_loader import PolicyRule
+from .policy_loader import Rule
 
 GENERATED_MARKER = "agent-policy-generated: true"
 
@@ -20,7 +20,7 @@ def environment() -> Environment:
     )
 
 
-def render_agents(config: Config, rules: Iterable[PolicyRule]) -> str:
+def render_agents(config: Config, rules: Iterable[Rule]) -> str:
     template = environment().get_template("AGENTS.md.j2")
     return template.render(config=config, rules=list(rules))
 
