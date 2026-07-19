@@ -1,7 +1,7 @@
 name: Validate bootstrap skill
 on:
   push:
-    branches: [bootstrap-agent-policy]
+    branches: [bootstrap-agent-policy, 'chatgpt/bootstrap-*']
   pull_request:
     branches: [bootstrap-agent-policy]
 permissions:
@@ -17,13 +17,19 @@ jobs:
       - run: python -m pip install pytest
       - run: pytest -q
       - run: python -m compileall -q scripts
-      - name: Reject mutable toolchain references
+      - name: Validate immutable non-finalizing manifest
         run: |
           python - <<'PY'
           import json, re
           from pathlib import Path
+
           value = json.loads(Path('bootstrap-manifest.yml').read_text())
+          if value.get('schema_version') != 2:
+              raise SystemExit('unexpected manifest schema version')
           revision = value['toolchain']['revision']
           if not re.fullmatch(r'[0-9a-f]{40}', revision):
               raise SystemExit('toolchain revision is not a full commit SHA')
+          routes = value.get('routes')
+          if not isinstance(routes, dict) or 'finalize' in json.dumps(routes):
+              raise SystemExit('manifest routes must not expose finalization')
           PY
