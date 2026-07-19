@@ -1,11 +1,18 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "toolchain": {
     "repository": "TakashiSasaki/agent-policy",
-    "revision": "beeb554e20fbc13be468357d2b92122dba45e2f3"
+    "revision": "848923054e168eb2f8c696e73e2273ba8bf09501"
   },
   "entrypoint": {
-    "executable": "agent-policy",
-    "command": "init"
+    "executable": "agent-policy"
+  },
+  "routes": {
+    "inspect": ["adopt", "inspect"],
+    "init": ["init"],
+    "adopt_prepare": ["adopt", "prepare"],
+    "adopt_preview": ["adopt", "preview"],
+    "validate": ["validate"],
+    "check": ["check"]
   }
 }
