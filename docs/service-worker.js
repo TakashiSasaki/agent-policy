@@ -1,4 +1,4 @@
-const CACHE_VERSION = "agent-policy-pwa-v5";
+const CACHE_VERSION = "agent-policy-pwa-v6";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const OFFLINE_URL = "/offline.html";
@@ -14,8 +14,7 @@ const PRECACHE_URLS = [
   "/assets/icons/icon-512.png",
   "/assets/icons/icon-maskable-512.png",
   "/assets/icons/apple-touch-icon.png",
-  "/assets/icons/favicon-32.png",
-  "/assets/social/agent-policy-og.png"
+  "/assets/icons/favicon-32.png"
 ];
 
 self.addEventListener("install", (event) => {
