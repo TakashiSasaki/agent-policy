@@ -1,4 +1,4 @@
-const CACHE_VERSION = "agent-policy-pwa-v5";
+const CACHE_VERSION = "agent-policy-pwa-v6";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const OFFLINE_URL = "/offline.html";
