@@ -1,9 +1,14 @@
 ---
 name: bootstrap-agent-policy
-description: Inspect an unmanaged Git repository and use one pinned TakashiSasaki/agent-policy revision to initialize an empty repository or prepare a reviewable adoption of existing handwritten agent instructions.
+description: Deprecated historical bootstrap. Do not use this branch for new adoption; use the integrated bootstrap skill from TakashiSasaki/templates policy instead.
 ---
 
 # Bootstrap agent policy
+
+> [!WARNING]
+> This bootstrap branch is deprecated and retained only so historical full-SHA references remain addressable. For new adoption, use the integrated `bootstrap-agent-policy` skill from `TakashiSasaki/templates` branch `policy` and its reviewed stable full-SHA release. The stable toolchain revision at deprecation time is `5de32547e68fa15e24ff3b8affadf12e9d730a41`.
+
+The procedure below documents the historical behavior of this branch and is preserved for old pinned references. Do not start new adoption from the mutable branch tip.
 
 Use this skill when a Git repository does not contain `.agent-policy.yml` and the user asks to adopt the shared `TakashiSasaki/agent-policy` system.
 
