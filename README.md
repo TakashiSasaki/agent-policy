@@ -1,5 +1,10 @@
 # agent-policy
 
+> [!WARNING]
+> This repository is deprecated and preserved only for historical full-SHA references. The maintained policy-toolkit authority is `TakashiSasaki/templates` on the unrelated `policy` branch: https://github.com/TakashiSasaki/templates/tree/policy. New and migrated consumers must use the reviewed stable full SHA published there; the stable revision at deprecation time is `5de32547e68fa15e24ff3b8affadf12e9d730a41`.
+>
+> Do not start new development or new consumer adoption from this repository. Existing commit objects and historical links are intentionally retained. This repository must not be deleted.
+
 Documentation: <https://agent-policy.moukaeritai.work/>
 
 `agent-policy` is a policy compiler and repository bootstrap tool for sharing agent rules across multiple products and multiple coding or general-purpose agents.
