@@ -165,14 +165,15 @@
   function createDialog() {
     const dialog = document.createElement("dialog");
     dialog.className = "repository-preview-dialog";
+    dialog.setAttribute("aria-labelledby", "repository-preview-dialog-title");
     dialog.innerHTML = `
       <div class="repository-preview-dialog__panel">
         <header class="repository-preview-dialog__header">
           <div>
-            <h2 class="repository-preview-dialog__title"></h2>
+            <h2 id="repository-preview-dialog-title" class="repository-preview-dialog__title"></h2>
             <p class="repository-preview-dialog__meta"></p>
           </div>
-          <button type="button" class="repository-preview-dialog__icon-close" aria-label="閉じる">×</button>
+          <button type="button" class="repository-preview-dialog__icon-close" aria-label="閉じる" title="閉じる">×</button>
         </header>
         <div class="repository-preview-dialog__toolbar" role="group" aria-label="ファイル表示設定" hidden>
           <label>
